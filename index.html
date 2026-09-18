@@ -4,519 +4,461 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>MacroSnap – AI Food Tracker</title>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>MacroSnap</title>
 <style>
-  :root{--bg:#0f1115;--card:#1a1d24;--card2:#22262f;--text:#eef0f4;--muted:#8b919e;--accent:#4ade80;--protein:#60a5fa;--carbs:#fbbf24;--fat:#f472b6;--water:#38bdf8;--danger:#f87171;--radius:16px}
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:100px}
-  header{padding:18px 20px 8px;display:flex;justify-content:space-between;align-items:center}
-  header h1{font-size:22px;font-weight:700}
-  header h1 span{color:var(--accent)}
-  .icon-btn{background:var(--card);border:none;color:var(--text);width:40px;height:40px;border-radius:12px;font-size:18px;cursor:pointer}
-  main{padding:0 16px;max-width:600px;margin:0 auto}
-  .card{background:var(--card);border-radius:var(--radius);padding:18px;margin-bottom:14px}
-  .date-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-  .date-nav button{background:none;border:none;color:var(--accent);font-size:20px;cursor:pointer;padding:4px 10px}
-  .date-nav h2{font-size:16px;font-weight:600}
-  .ring-wrap{display:flex;align-items:center;gap:20px}
-  .ring{position:relative;width:130px;height:130px;flex-shrink:0}
-  .ring svg{transform:rotate(-90deg)}
-  .ring circle{fill:none;stroke-width:11;stroke-linecap:round}
-  .ring .bg{stroke:var(--card2)}
-  .ring .fg{stroke:var(--accent);transition:stroke-dashoffset .6s ease}
-  .ring .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .ring .center b{font-size:26px}
-  .ring .center small{color:var(--muted);font-size:11px}
-  .macros{flex:1;display:flex;flex-direction:column;gap:12px}
-  .macro label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
-  .macro label span:last-child{color:var(--muted)}
-  .bar{height:8px;background:var(--card2);border-radius:99px;overflow:hidden}
-  .bar div{height:100%;border-radius:99px;transition:width .6s ease}
-  .p .bar div{background:var(--protein)}.c .bar div{background:var(--carbs)}.f .bar div{background:var(--fat)}
-  .section-title{font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 10px 4px}
-  .entry{display:flex;gap:12px;align-items:center;background:var(--card);border-radius:var(--radius);padding:12px;margin-bottom:10px}
-  .entry img,.entry .ph{width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
-  .entry .info{flex:1;min-width:0;cursor:pointer}
-  .entry .info b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .entry .info small{color:var(--muted);font-size:12px}
-  .entry .kcal{text-align:right;font-weight:700;font-size:16px}
-  .entry .kcal small{display:block;color:var(--muted);font-weight:400;font-size:11px}
-  .entry .del{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:6px}
-  .empty{text-align:center;color:var(--muted);padding:30px 10px;font-size:14px}
-  /* water */
-  .water-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-  .water-head b{font-size:16px}
-  .water-head span{color:var(--muted);font-size:13px}
-  .glasses{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-  .glass{width:28px;height:36px;border-radius:5px 5px 8px 8px;background:var(--card2);border:2px solid var(--card2);position:relative;overflow:hidden;cursor:pointer}
-  .glass i{position:absolute;bottom:0;left:0;right:0;background:var(--water);transition:height .4s}
-  .water-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-  .wbtn{background:var(--card2);border:none;color:var(--text);padding:12px 4px;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer}
-  .wbtn.blue{background:rgba(56,189,248,.18);color:var(--water)}
-  .wbtn small{display:block;font-weight:400;color:var(--muted);font-size:11px}
-  .water-bar{height:10px;background:var(--card2);border-radius:99px;overflow:hidden;margin-bottom:12px}
-  .water-bar div{height:100%;background:var(--water);border-radius:99px;transition:width .5s}
-  /* fab */
-  .fab-bar{position:fixed;bottom:0;left:0;right:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 30%);display:flex;gap:10px;justify-content:center;max-width:600px;margin:0 auto}
-  .fab{padding:14px 12px;border:none;border-radius:16px;font-size:14px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex:1}
-  .fab .ic{font-size:20px}
-  .fab.primary{background:var(--accent);color:#0a2e16;flex:1.4}
-  .fab.secondary{background:var(--card);color:var(--text)}
-  .fab.water{background:rgba(56,189,248,.18);color:var(--water)}
-  /* modal */
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:flex-end;justify-content:center;z-index:50}
-  .modal.open{display:flex}
-  .sheet{background:var(--card);width:100%;max-width:600px;border-radius:24px 24px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom));max-height:92vh;overflow-y:auto}
-  .sheet h3{font-size:18px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
-  .sheet h3 button{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer}
-  .preview{width:100%;max-height:260px;object-fit:cover;border-radius:14px;margin-bottom:14px;display:none}
-  .field{margin-bottom:12px}
-  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
-  input,textarea,select{width:100%;background:var(--card2);border:1px solid transparent;color:var(--text);padding:12px;border-radius:12px;font-size:15px;outline:none}
-  input:focus,textarea:focus{border-color:var(--accent)}
-  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .btn{width:100%;padding:15px;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px}
-  .btn.primary{background:var(--accent);color:#0a2e16}
-  .btn.blue{background:var(--water);color:#062a3a}
-  .btn.ghost{background:var(--card2);color:var(--text)}
-  .btn.sm{padding:10px;font-size:14px;margin:0}
-  .btn:disabled{opacity:.5;cursor:not-allowed}
-  .items{margin:10px 0}
-  .item{display:flex;justify-content:space-between;padding:10px 12px;background:var(--card2);border-radius:10px;margin-bottom:6px;font-size:14px}
-  .item span:last-child{color:var(--muted)}
-  .tabs{display:flex;background:var(--card2);border-radius:12px;padding:4px;margin-bottom:14px}
-  .tabs button{flex:1;padding:9px;border:none;background:none;color:var(--muted);font-weight:600;border-radius:9px;cursor:pointer;font-size:14px}
-  .tabs button.on{background:var(--card);color:var(--text)}
-  .fav{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;background:var(--card2);border-radius:12px;margin-bottom:8px}
-  .fav .n{flex:1;min-width:0;cursor:pointer}
-  .fav .n b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .fav .n small{color:var(--muted);font-size:12px}
-  .fav .add{background:var(--accent);color:#0a2e16;border:none;width:34px;height:34px;border-radius:10px;font-size:20px;font-weight:700;cursor:pointer;flex-shrink:0}
-  .fav .x{background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px}
-  .check{display:flex;align-items:center;gap:8px;font-size:14px;margin:12px 0 4px}
-  .check input{width:18px;height:18px;padding:0}
-  .search{margin-bottom:10px}
-  .loading{text-align:center;padding:30px 0;color:var(--muted)}
-  .spinner{width:36px;height:36px;border:4px solid var(--card2);border-top-color:var(--accent);border-radius:50%;margin:0 auto 14px;animation:spin .8s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
-  .err{background:rgba(248,113,113,.15);color:var(--danger);padding:12px;border-radius:12px;font-size:14px;margin-bottom:10px}
-  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:#0a2e16;padding:12px 20px;border-radius:12px;font-weight:600;z-index:100;opacity:0;transition:.3s;pointer-events:none}
-  .toast.show{opacity:1}
-  .conf{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;margin-left:6px}
-  .conf.high{background:rgba(74,222,128,.2);color:var(--accent)}
-  .conf.medium{background:rgba(251,191,36,.2);color:var(--carbs)}
-  .conf.low{background:rgba(248,113,113,.2);color:var(--danger)}
-  .week{display:flex;gap:6px;margin-top:14px}
-  .week div{flex:1;text-align:center;font-size:10px;color:var(--muted);cursor:pointer}
-  .week .wb{height:40px;background:var(--card2);border-radius:6px;position:relative;overflow:hidden;margin-bottom:4px}
-  .week .wb i{position:absolute;bottom:0;left:0;right:0;background:var(--accent);opacity:.8}
-  .week .today .wb{outline:2px solid var(--accent)}
+:root{--bg:#0f1115;--card:#1a1d24;--card2:#22262f;--text:#eef0f4;--muted:#8b919e;--accent:#4ade80;--protein:#60a5fa;--carbs:#fbbf24;--fat:#f472b6;--water:#38bdf8;--danger:#f87171;--r:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:100px}
+header{padding:18px 20px 8px;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:22px}header h1 span{color:var(--accent)}
+.icon-btn{background:var(--card);border:none;color:var(--text);width:40px;height:40px;border-radius:12px;font-size:18px;cursor:pointer}
+main{padding:0 16px;max-width:600px;margin:0 auto}
+.card{background:var(--card);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.date-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.date-nav button{background:none;border:none;color:var(--accent);font-size:20px;cursor:pointer;padding:4px 10px}
+.date-nav h2{font-size:16px}
+.ring-wrap{display:flex;align-items:center;gap:20px}
+.ring{position:relative;width:130px;height:130px;flex-shrink:0}
+.ring svg{transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:11;stroke-linecap:round}
+.ring .bg{stroke:var(--card2)}.ring .fg{stroke:var(--accent);transition:stroke-dashoffset .6s}
+.ring .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .center b{font-size:26px}.ring .center small{color:var(--muted);font-size:11px}
+.macros{flex:1;display:flex;flex-direction:column;gap:12px}
+.macro label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+.macro label span:last-child{color:var(--muted)}
+.bar{height:8px;background:var(--card2);border-radius:99px;overflow:hidden}
+.bar div{height:100%;border-radius:99px;transition:width .6s}
+.p .bar div{background:var(--protein)}.c .bar div{background:var(--carbs)}.f .bar div{background:var(--fat)}
+.week{display:flex;gap:6px;margin-top:14px}
+.week div{flex:1;text-align:center;font-size:10px;color:var(--muted);cursor:pointer}
+.week .wb{height:40px;background:var(--card2);border-radius:6px;position:relative;overflow:hidden;margin-bottom:4px}
+.week .wb i{position:absolute;bottom:0;left:0;right:0;background:var(--accent);opacity:.8}
+.week .today .wb{outline:2px solid var(--accent)}
+/* water */
+.water-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.water-head b{font-size:16px}.water-head span{color:var(--muted);font-size:13px}
+.water-bar{height:10px;background:var(--card2);border-radius:99px;overflow:hidden;margin-bottom:12px}
+.water-bar div{height:100%;background:var(--water);border-radius:99px;transition:width .5s}
+.glasses{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.glass{width:28px;height:36px;border-radius:5px 5px 8px 8px;background:var(--card2);position:relative;overflow:hidden;cursor:pointer}
+.glass i{position:absolute;bottom:0;left:0;right:0;background:var(--water);transition:height .4s}
+.water-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.wbtn{background:var(--card2);border:none;color:var(--text);padding:12px 4px;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer}
+.wbtn.blue{background:rgba(56,189,248,.18);color:var(--water)}
+.wbtn small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+/* meals */
+.meal{background:var(--card);border-radius:var(--r);padding:14px;margin-bottom:14px}
+.meal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.meal-head b{font-size:16px}.meal-head span{color:var(--muted);font-size:13px}
+.meal-head span b{color:var(--text);font-size:14px}
+.entry{display:flex;gap:12px;align-items:center;background:var(--card2);border-radius:12px;padding:10px;margin-bottom:8px}
+.entry img,.entry .ph{width:52px;height:52px;border-radius:10px;object-fit:cover;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.entry .info{flex:1;min-width:0;cursor:pointer}
+.entry .info b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entry .info small{color:var(--muted);font-size:12px}
+.entry .kcal{text-align:right;font-weight:700;font-size:15px}
+.entry .kcal small{display:block;color:var(--muted);font-weight:400;font-size:11px}
+.entry .del{background:none;border:none;color:var(--muted);font-size:17px;cursor:pointer;padding:6px}
+.meal-empty{color:var(--muted);font-size:13px;text-align:center;padding:8px 0 12px}
+.meal-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mbtn{background:var(--card2);border:none;color:var(--text);padding:10px 4px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer}
+.mbtn.green{background:rgba(74,222,128,.15);color:var(--accent)}
+/* fab */
+.fab-bar{position:fixed;bottom:0;left:0;right:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 30%);display:flex;gap:10px;justify-content:center;max-width:600px;margin:0 auto}
+.fab{padding:14px 12px;border:none;border-radius:16px;font-size:14px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.fab .ic{font-size:20px}
+.fab.primary{background:var(--accent);color:#0a2e16;flex:1.4}
+.fab.secondary{background:var(--card);color:var(--text)}
+.fab.water{background:rgba(56,189,248,.18);color:var(--water)}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.modal.open{display:flex}
+.sheet{background:var(--card);width:100%;max-width:600px;border-radius:24px 24px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom));max-height:92vh;overflow-y:auto}
+.sheet h3{font-size:18px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.sheet h3 button{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer}
+.preview{width:100%;max-height:260px;object-fit:cover;border-radius:14px;margin-bottom:14px;display:none}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+input,select{width:100%;background:var(--card2);border:1px solid transparent;color:var(--text);padding:12px;border-radius:12px;font-size:15px;outline:none}
+input:focus{border-color:var(--accent)}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{width:100%;padding:15px;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px}
+.btn.primary{background:var(--accent);color:#0a2e16}
+.btn.blue{background:var(--water);color:#062a3a}
+.btn.ghost{background:var(--card2);color:var(--text)}
+.btn.sm{padding:10px;font-size:14px;margin:0}
+.items{margin:10px 0}
+.item{display:flex;justify-content:space-between;padding:10px 12px;background:var(--card2);border-radius:10px;margin-bottom:6px;font-size:14px}
+.item span:last-child{color:var(--muted)}
+.tabs{display:flex;background:var(--card2);border-radius:12px;padding:4px;margin-bottom:14px}
+.tabs button{flex:1;padding:9px;border:none;background:none;color:var(--muted);font-weight:600;border-radius:9px;cursor:pointer;font-size:14px}
+.tabs button.on{background:var(--card);color:var(--text)}
+.fav{display:flex;align-items:center;gap:10px;padding:12px;background:var(--card2);border-radius:12px;margin-bottom:8px}
+.fav .n{flex:1;min-width:0;cursor:pointer}
+.fav .n b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fav .n small{color:var(--muted);font-size:12px}
+.fav .add{background:var(--accent);color:#0a2e16;border:none;width:34px;height:34px;border-radius:10px;font-size:20px;font-weight:700;cursor:pointer;flex-shrink:0}
+.fav .x{background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;margin:12px 0 4px}
+.check input{width:18px;height:18px;padding:0}
+.search{margin-bottom:10px}
+.loading{text-align:center;padding:30px 0;color:var(--muted)}
+.spinner{width:36px;height:36px;border:4px solid var(--card2);border-top-color:var(--accent);border-radius:50%;margin:0 auto 14px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+.err{background:rgba(248,113,113,.15);color:var(--danger);padding:12px;border-radius:12px;font-size:14px;margin-bottom:10px}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:#0a2e16;padding:12px 20px;border-radius:12px;font-weight:600;z-index:100;opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1}
+.conf{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;margin-left:6px}
+.conf.high{background:rgba(74,222,128,.2);color:var(--accent)}
+.conf.medium{background:rgba(251,191,36,.2);color:var(--carbs)}
+.conf.low{background:rgba(248,113,113,.2);color:var(--danger)}
+.empty{text-align:center;color:var(--muted);padding:20px 10px;font-size:14px}
 </style>
 </head>
 <body>
 
-<header>
-  <h1>Macro<span>Snap</span></h1>
-  <button class="icon-btn" onclick="openSettings()">⚙️</button>
-</header>
+<header><h1>Macro<span>Snap</span></h1><button class="icon-btn" onclick="openSettings()">⚙️</button></header>
 
 <main>
   <div class="card">
-    <div class="date-nav">
-      <button onclick="changeDay(-1)">‹</button>
-      <h2 id="dateLabel">Today</h2>
-      <button onclick="changeDay(1)">›</button>
-    </div>
+    <div class="date-nav"><button onclick="changeDay(-1)">‹</button><h2 id="dateLabel">Today</h2><button onclick="changeDay(1)">›</button></div>
     <div class="ring-wrap">
       <div class="ring">
-        <svg width="130" height="130" viewBox="0 0 130 130">
-          <circle class="bg" cx="65" cy="65" r="56"/>
-          <circle class="fg" id="ringFg" cx="65" cy="65" r="56" stroke-dasharray="351.9" stroke-dashoffset="351.9"/>
-        </svg>
+        <svg width="130" height="130" viewBox="0 0 130 130"><circle class="bg" cx="65" cy="65" r="56"/><circle class="fg" id="ringFg" cx="65" cy="65" r="56" stroke-dasharray="351.9" stroke-dashoffset="351.9"/></svg>
         <div class="center"><b id="kcalLeft">0</b><small id="kcalLabel">kcal left</small></div>
       </div>
       <div class="macros">
-        <div class="macro p"><label><span>Protein</span><span id="pTxt">0 / 0g</span></label><div class="bar"><div id="pBar"></div></div></div>
-        <div class="macro c"><label><span>Carbs</span><span id="cTxt">0 / 0g</span></label><div class="bar"><div id="cBar"></div></div></div>
-        <div class="macro f"><label><span>Fat</span><span id="fTxt">0 / 0g</span></label><div class="bar"><div id="fBar"></div></div></div>
+        <div class="macro p"><label><span>Protein</span><span id="pTxt"></span></label><div class="bar"><div id="pBar"></div></div></div>
+        <div class="macro c"><label><span>Carbs</span><span id="cTxt"></span></label><div class="bar"><div id="cBar"></div></div></div>
+        <div class="macro f"><label><span>Fat</span><span id="fTxt"></span></label><div class="bar"><div id="fBar"></div></div></div>
       </div>
     </div>
     <div class="week" id="week"></div>
   </div>
 
-  <!-- Water card -->
   <div class="card">
-    <div class="water-head">
-      <b>💧 Water</b>
-      <span id="waterTxt">0 / 64 oz</span>
-    </div>
+    <div class="water-head"><b>💧 Water</b><span id="waterTxt"></span></div>
     <div class="water-bar"><div id="waterBar"></div></div>
     <div class="glasses" id="glasses"></div>
     <div class="water-btns" id="waterQuick"></div>
   </div>
 
-  <div class="section-title">Meals</div>
-  <div id="entries"></div>
+  <div id="meals"></div>
 </main>
 
 <div class="fab-bar">
-  <button class="fab secondary" onclick="openManual()"><span class="ic">✏️</span>Add Food</button>
-  <button class="fab primary" onclick="document.getElementById('camInput').click()"><span class="ic">📷</span>Snap Food</button>
-  <button class="fab secondary" onclick="document.getElementById('fileInput').click()"><span class="ic">🖼️</span>Gallery</button>
+  <button class="fab secondary" onclick="openManual(null,'new',guessMeal())"><span class="ic">✏️</span>Add Food</button>
+  <button class="fab primary" onclick="snap('cam',guessMeal())"><span class="ic">📷</span>Snap Food</button>
+  <button class="fab secondary" onclick="snap('file',guessMeal())"><span class="ic">🖼️</span>Gallery</button>
   <button class="fab water" onclick="openWater()"><span class="ic">💧</span>Water</button>
 </div>
 <input type="file" id="camInput" accept="image/*" capture="environment" hidden>
 <input type="file" id="fileInput" accept="image/*" hidden>
 
-<!-- Analyze / Edit / Manual modal -->
-<div class="modal" id="analyzeModal">
-  <div class="sheet">
-    <h3><span id="analyzeTitle">Analyzing…</span><button onclick="closeModal('analyzeModal')">×</button></h3>
-    <img class="preview" id="preview">
-    <div id="analyzeBody"></div>
-  </div>
-</div>
+<div class="modal" id="analyzeModal"><div class="sheet">
+  <h3><span id="analyzeTitle"></span><button onclick="closeModal('analyzeModal')">×</button></h3>
+  <img class="preview" id="preview"><div id="analyzeBody"></div>
+</div></div>
 
-<!-- Water modal -->
-<div class="modal" id="waterModal">
-  <div class="sheet">
-    <h3>💧 Log Water<button onclick="closeModal('waterModal')">×</button></h3>
-    <div class="grid3" id="waterPresets"></div>
-    <div class="field" style="margin-top:14px"><label>Custom amount</label>
-      <div class="grid2">
-        <input type="number" id="waterCustom" placeholder="e.g. 12" inputmode="decimal">
-        <select id="waterCustomUnit"><option value="oz">fl oz</option><option value="ml">ml</option><option value="cup">cups</option></select>
-      </div>
-    </div>
-    <button class="btn blue" onclick="addCustomWater()">Add water</button>
-    <div id="waterHistory"></div>
-    <button class="btn ghost" style="color:var(--danger)" onclick="resetWater()">Reset today's water</button>
-  </div>
-</div>
+<div class="modal" id="waterModal"><div class="sheet">
+  <h3>💧 Log Water<button onclick="closeModal('waterModal')">×</button></h3>
+  <div class="grid3" id="waterPresets"></div>
+  <div class="field" style="margin-top:14px"><label>Custom amount</label>
+    <div class="grid2"><input type="number" id="waterCustom" placeholder="e.g. 12" inputmode="decimal">
+    <select id="waterCustomUnit"><option value="oz">fl oz</option><option value="ml">ml</option><option value="cup">cups</option></select></div></div>
+  <button class="btn blue" onclick="addCustomWater()">Add water</button>
+  <div id="waterHistory"></div>
+  <button class="btn ghost" style="color:var(--danger)" onclick="resetWater()">Reset today's water</button>
+</div></div>
 
-<!-- Settings modal -->
-<div class="modal" id="settingsModal">
-  <div class="sheet">
-    <h3>Settings<button onclick="closeModal('settingsModal')">×</button></h3>
-    <div class="field"><label>Anthropic API Key</label><input type="password" id="apiKey" placeholder="sk-ant-..."></div>
-    <p class="note">Your key is stored only in this browser (localStorage) and sent directly to Anthropic. Get one at console.anthropic.com.</p>
-    <div class="section-title">Daily Goals</div>
-    <div class="grid4">
-      <div class="field"><label>Calories</label><input type="number" id="gKcal"></div>
-      <div class="field"><label>Protein g</label><input type="number" id="gP"></div>
-      <div class="field"><label>Carbs g</label><input type="number" id="gC"></div>
-      <div class="field"><label>Fat g</label><input type="number" id="gF"></div>
-    </div>
-    <div class="section-title">Water</div>
-    <div class="grid3">
-      <div class="field"><label>Unit</label><select id="gUnit" onchange="unitChanged()"><option value="oz">fl oz</option><option value="ml">ml</option></select></div>
-      <div class="field"><label id="gWaterLbl">Goal (oz)</label><input type="number" id="gWater" inputmode="decimal"></div>
-      <div class="field"><label id="gGlassLbl">Glass (oz)</label><input type="number" id="gGlass" inputmode="decimal"></div>
-    </div>
-    <button class="btn primary" onclick="saveSettings()">Save</button>
-    <button class="btn ghost" onclick="exportData()">Export data (JSON)</button>
-    <button class="btn ghost" style="color:var(--danger)" onclick="clearAll()">Clear all data</button>
+<div class="modal" id="settingsModal"><div class="sheet">
+  <h3>Settings<button onclick="closeModal('settingsModal')">×</button></h3>
+  <div class="field"><label>Anthropic API Key</label><input type="password" id="apiKey" placeholder="sk-ant-..."></div>
+  <p class="note">Stored only on this device and sent directly to Anthropic. Get one at console.anthropic.com.</p>
+  <div class="field" style="margin-top:14px"><label>Daily calorie goal</label><input type="number" id="gKcal"></div>
+  <div class="grid3">
+    <div class="field"><label>Protein g</label><input type="number" id="gP"></div>
+    <div class="field"><label>Carbs g</label><input type="number" id="gC"></div>
+    <div class="field"><label>Fat g</label><input type="number" id="gF"></div>
   </div>
-</div>
+  <div class="grid3">
+    <div class="field"><label>Water unit</label><select id="gUnit" onchange="unitChanged()"><option value="oz">fl oz</option><option value="ml">ml</option></select></div>
+    <div class="field"><label id="gWaterLbl">Goal (oz)</label><input type="number" id="gWater" inputmode="decimal"></div>
+    <div class="field"><label id="gGlassLbl">Glass (oz)</label><input type="number" id="gGlass" inputmode="decimal"></div>
+  </div>
+  <button class="btn primary" onclick="saveSettings()">Save</button>
+  <button class="btn ghost" onclick="exportData()">Export data (JSON)</button>
+  <button class="btn ghost" style="color:var(--danger)" onclick="clearAll()">Clear all data</button>
+</div></div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-/* ---------- State ---------- */
-const LS = { log:'ms_log', settings:'ms_settings', water:'ms_water', favs:'ms_favs' };
-const OZ = 29.5735, CUP = 236.588;
-// water goal & glass are always stored in ml internally; waterUnit controls display. Defaults: 64 oz goal, 8 oz glass.
-let settings = Object.assign({ apiKey:'', kcal:2000, p:150, c:200, f:65, waterUnit:'oz', water:Math.round(64*OZ), glass:Math.round(8*OZ) }, JSON.parse(localStorage.getItem(LS.settings)||'{}'));
-let log = JSON.parse(localStorage.getItem(LS.log)||'{}');
-let water = JSON.parse(localStorage.getItem(LS.water)||'{}');   // { 'YYYY-MM-DD': [ {ml, time} ] }
-let favs = JSON.parse(localStorage.getItem(LS.favs)||'[]');
-let viewDate = todayKey();
-let pending = null;
+/* ---------- constants & state ---------- */
+const LS={log:'ms_log',settings:'ms_settings',water:'ms_water',favs:'ms_favs'};
+const OZ=29.5735,CUP=236.588;
+const MEALS=[
+  {id:'breakfast',name:'Breakfast',icon:'🌅'},
+  {id:'lunch',name:'Lunch',icon:'☀️'},
+  {id:'dinner',name:'Dinner',icon:'🌙'},
+  {id:'snack',name:'Snacks & Other',icon:'🍎',hint:'Food eaten outside a meal'}
+];
+let settings=Object.assign({apiKey:'',kcal:2000,p:150,c:200,f:65,waterUnit:'oz',water:Math.round(64*OZ),glass:Math.round(8*OZ)},JSON.parse(localStorage.getItem(LS.settings)||'{}'));
+let log=JSON.parse(localStorage.getItem(LS.log)||'{}');
+let water=JSON.parse(localStorage.getItem(LS.water)||'{}');
+let favs=JSON.parse(localStorage.getItem(LS.favs)||'[]');
+let viewDate=todayKey(), pending=null, targetMeal='snack';
+// migrate old entries without a meal
+Object.values(log).forEach(a=>a.forEach(e=>{if(!e.meal)e.meal='snack';}));
 
-function todayKey(d=new Date()){ const x=new Date(d); x.setMinutes(x.getMinutes()-x.getTimezoneOffset()); return x.toISOString().slice(0,10); }
-function save(){ localStorage.setItem(LS.log, JSON.stringify(log)); localStorage.setItem(LS.settings, JSON.stringify(settings)); localStorage.setItem(LS.water, JSON.stringify(water)); localStorage.setItem(LS.favs, JSON.stringify(favs)); }
-function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
-function openModal(id){ document.getElementById(id).classList.add('open'); }
-function closeModal(id){ document.getElementById(id).classList.remove('open'); }
-function nowTime(){ return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
-function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function todayKey(d=new Date()){const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10);}
+function save(){localStorage.setItem(LS.log,JSON.stringify(log));localStorage.setItem(LS.settings,JSON.stringify(settings));localStorage.setItem(LS.water,JSON.stringify(water));localStorage.setItem(LS.favs,JSON.stringify(favs));}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function nowTime(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function guessMeal(){const h=new Date().getHours();return h<11?'breakfast':h<15?'lunch':h<21?'dinner':'snack';}
+function mealOf(id){return MEALS.find(m=>m.id===id)||MEALS[3];}
+const isOz=()=>settings.waterUnit==='oz';
+function toU(ml){return isOz()?ml/OZ:ml;}
+function fmtNum(v){return isOz()?String(Math.round(v*10)/10):String(Math.round(v));}
+function fmtW(ml){return `$${fmtNum(toU(ml))} $${isOz()?'oz':'ml'}`;}
 
-/* ---------- Unit helpers ---------- */
-const isOz = ()=>settings.waterUnit==='oz';
-function toU(ml){ return isOz()? ml/OZ : ml; }               // ml -> display unit
-function fromU(v){ return isOz()? v*OZ : v; }               // display unit -> ml
-function fmtNum(v){ return isOz()? (Math.round(v*10)/10).toString() : Math.round(v).toString(); }
-function fmtW(ml){ return `$${fmtNum(toU(ml))} $${isOz()?'oz':'ml'}`; }
-
-/* ---------- Rendering ---------- */
+/* ---------- render ---------- */
 function render(){
-  const entries = log[viewDate]||[];
-  const tot = entries.reduce((a,e)=>({kcal:a.kcal+e.kcal,p:a.p+e.p,c:a.c+e.c,f:a.f+e.f}),{kcal:0,p:0,c:0,f:0});
-  const d = new Date(viewDate+'T12:00');
-  const isToday = viewDate===todayKey();
-  document.getElementById('dateLabel').textContent = isToday?'Today':d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+  const entries=log[viewDate]||[];
+  const tot=entries.reduce((a,e)=>({kcal:a.kcal+e.kcal,p:a.p+e.p,c:a.c+e.c,f:a.f+e.f}),{kcal:0,p:0,c:0,f:0});
+  const d=new Date(viewDate+'T12:00');
+  document.getElementById('dateLabel').textContent=viewDate===todayKey()?'Today':d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+  const left=settings.kcal-tot.kcal;
+  document.getElementById('kcalLeft').textContent=Math.abs(Math.round(left));
+  document.getElementById('kcalLabel').textContent=left>=0?'kcal left':'kcal over';
+  document.getElementById('ringFg').style.strokeDashoffset=351.9*(1-Math.min(tot.kcal/settings.kcal,1));
+  document.getElementById('ringFg').style.stroke=left<0?'var(--danger)':'var(--accent)';
+  ['p','c','f'].forEach(k=>{document.getElementById(k+'Txt').textContent=`$${Math.round(tot[k])} / $${settings[k]}g`;document.getElementById(k+'Bar').style.width=Math.min(tot[k]/settings[k]*100,100)+'%';});
 
-  const left = settings.kcal - tot.kcal;
-  document.getElementById('kcalLeft').textContent = Math.abs(Math.round(left));
-  document.getElementById('kcalLabel').textContent = left>=0?'kcal left':'kcal over';
-  const pct = Math.min(tot.kcal/settings.kcal,1);
-  document.getElementById('ringFg').style.strokeDashoffset = 351.9*(1-pct);
-  document.getElementById('ringFg').style.stroke = left<0?'var(--danger)':'var(--accent)';
-
-  ['p','c','f'].forEach(k=>{
-    document.getElementById(k+'Txt').textContent = `$${Math.round(tot[k])} / $${settings[k]}g`;
-    document.getElementById(k+'Bar').style.width = Math.min(tot[k]/settings[k]*100,100)+'%';
-  });
-
-  const wk = document.getElementById('week'); wk.innerHTML='';
-  for(let i=6;i>=0;i--){
-    const dd=new Date(); dd.setDate(dd.getDate()-i); const k=todayKey(dd);
-    const kc=(log[k]||[]).reduce((a,e)=>a+e.kcal,0);
-    const el=document.createElement('div'); if(k===viewDate) el.className='today';
+  const wk=document.getElementById('week');wk.innerHTML='';
+  for(let i=6;i>=0;i--){const dd=new Date();dd.setDate(dd.getDate()-i);const k=todayKey(dd);
+    const kc=(log[k]||[]).reduce((a,e)=>a+e.kcal,0);const el=document.createElement('div');if(k===viewDate)el.className='today';
     el.innerHTML=`<div class="wb"><i style="height:$${Math.min(kc/settings.kcal*100,100)}%"></i></div>$${dd.toLocaleDateString(undefined,{weekday:'narrow'})}`;
-    el.onclick=()=>{viewDate=k;render();};
-    wk.appendChild(el);
-  }
+    el.onclick=()=>{viewDate=k;render();};wk.appendChild(el);}
 
   renderWater();
 
-  const list = document.getElementById('entries'); list.innerHTML='';
-  if(!entries.length){ list.innerHTML='<div class="empty">No meals logged yet.<br>Snap a photo or add food manually 🍽️</div>'; return; }
-  entries.slice().reverse().forEach(e=>{
-    const div=document.createElement('div'); div.className='entry';
-    div.innerHTML=`$${e.img?`<img src="$${e.img}">`:`<div class="ph">🍽️</div>`}
-      <div class="info"><b>$${esc(e.name)}</b><small>$${e.time} · P $${Math.round(e.p)} · C $${Math.round(e.c)} · F ${Math.round(e.f)}</small></div>
-      <div class="kcal">${Math.round(e.kcal)}<small>kcal</small></div>
-      <button class="del">🗑</button>`;
-    div.querySelector('.del').onclick=()=>{ log[viewDate]=log[viewDate].filter(x=>x.id!==e.id); save(); render(); };
-    div.querySelector('.info').onclick=()=>editEntry(e);
-    list.appendChild(div);
+  const wrap=document.getElementById('meals');wrap.innerHTML='';
+  MEALS.forEach(m=>{
+    const list=entries.filter(e=>e.meal===m.id);
+    const kc=list.reduce((a,e)=>a+e.kcal,0), p=list.reduce((a,e)=>a+e.p,0);
+    const sec=document.createElement('div');sec.className='meal';
+    sec.innerHTML=`<div class="meal-head"><b>$${m.icon} $${m.name}</b><span>$${list.length?`<b>$${Math.round(kc)}</b> kcal · P ${Math.round(p)}g`:(m.hint||'')}</span></div>
+      <div class="list"></div>
+      ${list.length?'':`<div class="meal-empty">Nothing logged yet</div>`}
+      <div class="meal-btns">
+        <button class="mbtn green" onclick="snap('cam','${m.id}')">📷 Snap</button>
+        <button class="mbtn" onclick="snap('file','${m.id}')">🖼️ Gallery</button>
+        <button class="mbtn" onclick="openManual(null,'new','${m.id}')">✏️ Add</button>
+      </div>`;
+    const lst=sec.querySelector('.list');
+    list.forEach(e=>{
+      const div=document.createElement('div');div.className='entry';
+      div.innerHTML=`$${e.img?`<img src="$${e.img}">`:`<div class="ph">🍽️</div>`}
+        <div class="info"><b>$${esc(e.name)}</b><small>$${e.time} · P $${Math.round(e.p)} · C $${Math.round(e.c)} · F ${Math.round(e.f)}</small></div>
+        <div class="kcal">${Math.round(e.kcal)}<small>kcal</small></div><button class="del">🗑</button>`;
+      div.querySelector('.del').onclick=()=>{log[viewDate]=log[viewDate].filter(x=>x.id!==e.id);save();render();};
+      div.querySelector('.info').onclick=()=>editEntry(e);
+      lst.appendChild(div);
+    });
+    wrap.appendChild(sec);
   });
 }
-function changeDay(n){ const d=new Date(viewDate+'T12:00'); d.setDate(d.getDate()+n); viewDate=todayKey(d); render(); }
+function changeDay(n){const d=new Date(viewDate+'T12:00');d.setDate(d.getDate()+n);viewDate=todayKey(d);render();}
 
-/* ---------- Water ---------- */
-function waterTotal(k=viewDate){ return (water[k]||[]).reduce((a,w)=>a+w.ml,0); }
+/* ---------- water ---------- */
+function waterTotal(k=viewDate){return (water[k]||[]).reduce((a,w)=>a+w.ml,0);}
 function renderWater(){
-  const tot=waterTotal(), goal=settings.water, glass=settings.glass||Math.round(8*OZ);
-  document.getElementById('waterTxt').textContent = `$${fmtNum(toU(tot))} / $${fmtW(goal)}${tot>=goal?' ✓':''}`;
-  document.getElementById('waterBar').style.width = Math.min(tot/goal*100,100)+'%';
-
-  const g=document.getElementById('glasses'); g.innerHTML='';
-  const n=Math.max(Math.ceil(goal/glass), Math.ceil(tot/glass));
-  for(let i=0;i<Math.min(n,16);i++){
-    const fill=Math.max(0,Math.min(1,(tot-i*glass)/glass));
-    const el=document.createElement('div'); el.className='glass'; el.title=`Tap to add ${fmtW(glass)}`;
-    el.innerHTML=`<i style="height:${fill*100}%"></i>`;
-    el.onclick=()=>addWater(glass);
-    g.appendChild(el);
-  }
-
-  // quick buttons (unit-aware)
-  const q = isOz()
-    ? [[8*OZ,'+8 oz','glass'],[16*OZ,'+16 oz','bottle']]
-    : [[250,'+250 ml','glass'],[500,'+500 ml','bottle']];
-  document.getElementById('waterQuick').innerHTML =
-    q.map(([ml,l,s])=>`<button class="wbtn blue" onclick="addWater($${ml})">$${l}<small>${s}</small></button>`).join('') +
-    `<button class="wbtn blue" onclick="openWater()">Custom<small>amount</small></button>
-     <button class="wbtn" onclick="undoWater()">Undo<small>last</small></button>`;
-
-  // modal presets
-  const presets = isOz()
-    ? [[8,'cup'],[12,'can'],[16,'bottle'],[20,'bottle'],[24,'large'],[32,'quart']].map(([v,s])=>[v*OZ,`${v} oz`,s])
-    : [[150,'cup'],[250,'glass'],[330,'can'],[500,'bottle'],[750,'large'],[1000,'liter']].map(([v,s])=>[v,v>=1000?`${v/1000} L`:`${v} ml`,s]);
-  document.getElementById('waterPresets').innerHTML = presets.map(([ml,l,s])=>
-    `<button class="btn ghost sm" onclick="addWater($${ml});closeModal('waterModal')">$${l}<br><small style="color:var(--muted)">${s}</small></button>`).join('');
-
-  const h=document.getElementById('waterHistory');
+  const tot=waterTotal(),goal=settings.water,glass=settings.glass||Math.round(8*OZ);
+  document.getElementById('waterTxt').textContent=`$${fmtNum(toU(tot))} / $${fmtW(goal)}${tot>=goal?' ✓':''}`;
+  document.getElementById('waterBar').style.width=Math.min(tot/goal*100,100)+'%';
+  const g=document.getElementById('glasses');g.innerHTML='';
+  const n=Math.max(Math.ceil(goal/glass),Math.ceil(tot/glass));
+  for(let i=0;i<Math.min(n,16);i++){const fill=Math.max(0,Math.min(1,(tot-i*glass)/glass));const el=document.createElement('div');el.className='glass';
+    el.innerHTML=`<i style="height:${fill*100}%"></i>`;el.onclick=()=>addWater(glass);g.appendChild(el);}
+  const q=isOz()?[[8*OZ,'+8 oz','glass'],[16*OZ,'+16 oz','bottle']]:[[250,'+250 ml','glass'],[500,'+500 ml','bottle']];
+  document.getElementById('waterQuick').innerHTML=q.map(([ml,l,s])=>`<button class="wbtn blue" onclick="addWater($${ml})">$${l}<small>${s}</small></button>`).join('')+
+    `<button class="wbtn blue" onclick="openWater()">Custom<small>amount</small></button><button class="wbtn" onclick="undoWater()">Undo<small>last</small></button>`;
+  const presets=isOz()?[[8,'cup'],[12,'can'],[16,'bottle'],[20,'bottle'],[24,'large'],[32,'quart']].map(([v,s])=>[v*OZ,`${v} oz`,s])
+    :[[150,'cup'],[250,'glass'],[330,'can'],[500,'bottle'],[750,'large'],[1000,'liter']].map(([v,s])=>[v,v>=1000?`${v/1000} L`:`${v} ml`,s]);
+  document.getElementById('waterPresets').innerHTML=presets.map(([ml,l,s])=>`<button class="btn ghost sm" onclick="addWater($${ml});closeModal('waterModal')">$${l}<br><small style="color:var(--muted)">${s}</small></button>`).join('');
   const arr=water[viewDate]||[];
-  h.innerHTML = arr.length? `<div class="section-title">Today's log</div>`+arr.slice().reverse().map((w,i)=>{
-    const idx=arr.length-1-i;
-    return `<div class="item"><span>💧 $${fmtW(w.ml)}</span><span>$${w.time} <button style="background:none;border:none;color:var(--muted);cursor:pointer;margin-left:6px" onclick="removeWater(${idx})">✕</button></span></div>`;
-  }).join('') : '';
+  document.getElementById('waterHistory').innerHTML=arr.length?`<p class="note" style="margin:14px 0 8px;text-transform:uppercase">Today's log</p>`+arr.slice().reverse().map((w,i)=>{const idx=arr.length-1-i;
+    return `<div class="item"><span>💧 $${fmtW(w.ml)}</span><span>$${w.time} <button style="background:none;border:none;color:var(--muted);cursor:pointer;margin-left:6px" onclick="removeWater(${idx})">✕</button></span></div>`;}).join(''):'';
 }
-function addWater(ml){
-  ml=Math.round(ml); if(!ml||ml<=0) return;
-  (water[viewDate]=water[viewDate]||[]).push({ml,time:nowTime()});
-  save(); renderWater();
-  const t=waterTotal();
-  toast(t>=settings.water && t-ml<settings.water ? '🎉 Water goal reached!' : `+${fmtW(ml)} water`);
-}
-function addCustomWater(){
-  const v=parseFloat(document.getElementById('waterCustom').value), u=document.getElementById('waterCustomUnit').value;
-  if(!v){ toast('Enter an amount'); return; }
-  addWater(u==='oz'?v*OZ:u==='cup'?v*CUP:v);
-  document.getElementById('waterCustom').value=''; closeModal('waterModal');
-}
-function undoWater(){ const arr=water[viewDate]; if(!arr||!arr.length){toast('Nothing to undo');return;} const w=arr.pop(); save(); renderWater(); toast(`Removed ${fmtW(w.ml)}`); }
-function removeWater(i){ water[viewDate].splice(i,1); save(); renderWater(); }
-function resetWater(){ if(confirm("Reset this day's water?")){ water[viewDate]=[]; save(); renderWater(); closeModal('waterModal'); } }
-function openWater(){ renderWater(); document.getElementById('waterCustomUnit').value=settings.waterUnit; openModal('waterModal'); }
+function addWater(ml){ml=Math.round(ml);if(!ml||ml<=0)return;(water[viewDate]=water[viewDate]||[]).push({ml,time:nowTime()});save();renderWater();
+  const t=waterTotal();toast(t>=settings.water&&t-ml<settings.water?'🎉 Water goal reached!':`+${fmtW(ml)} water`);}
+function addCustomWater(){const v=parseFloat(document.getElementById('waterCustom').value),u=document.getElementById('waterCustomUnit').value;if(!v){toast('Enter an amount');return;}
+  addWater(u==='oz'?v*OZ:u==='cup'?v*CUP:v);document.getElementById('waterCustom').value='';closeModal('waterModal');}
+function undoWater(){const arr=water[viewDate];if(!arr||!arr.length){toast('Nothing to undo');return;}const w=arr.pop();save();renderWater();toast(`Removed ${fmtW(w.ml)}`);}
+function removeWater(i){water[viewDate].splice(i,1);save();renderWater();}
+function resetWater(){if(confirm("Reset this day's water?")){water[viewDate]=[];save();renderWater();closeModal('waterModal');}}
+function openWater(){renderWater();document.getElementById('waterCustomUnit').value=settings.waterUnit;openModal('waterModal');}
 
-/* ---------- Image handling ---------- */
-function fileToResizedDataURL(file, max=1024, q=0.82){
-  return new Promise((res,rej)=>{
-    const img=new Image(); const url=URL.createObjectURL(file);
-    img.onload=()=>{ const s=Math.min(1,max/Math.max(img.width,img.height));
-      const c=document.createElement('canvas'); c.width=img.width*s; c.height=img.height*s;
-      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-      URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg',q)); };
-    img.onerror=rej; img.src=url;
-  });
-}
-function thumb(dataURL, size=120){
-  return new Promise(res=>{ const img=new Image(); img.onload=()=>{ const c=document.createElement('canvas'); c.width=c.height=size;
-    const m=Math.min(img.width,img.height); c.getContext('2d').drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,size,size);
-    res(c.toDataURL('image/jpeg',0.7)); }; img.src=dataURL; });
-}
-['camInput','fileInput'].forEach(id=>document.getElementById(id).addEventListener('change', async e=>{
-  const f=e.target.files[0]; e.target.value=''; if(!f) return;
-  if(!settings.apiKey){ toast('Add your API key in settings first'); openSettings(); return; }
-  const dataURL = await fileToResizedDataURL(f);
-  analyzePhoto(dataURL);
+/* ---------- photos ---------- */
+function snap(kind,meal){targetMeal=meal||'snack';document.getElementById(kind==='cam'?'camInput':'fileInput').click();}
+function fileToResizedDataURL(file,max=1024,q=.82){return new Promise((res,rej)=>{const img=new Image();const url=URL.createObjectURL(file);
+  img.onload=()=>{const s=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=img.width*s;c.height=img.height*s;
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',q));};img.onerror=rej;img.src=url;});}
+function thumb(dataURL,size=120){return new Promise(res=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=c.height=size;
+  const m=Math.min(img.width,img.height);c.getContext('2d').drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,size,size);res(c.toDataURL('image/jpeg',.7));};img.src=dataURL;});}
+['camInput','fileInput'].forEach(id=>document.getElementById(id).addEventListener('change',async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  if(!settings.apiKey){toast('Add your API key in settings first');openSettings();return;}
+  analyzePhoto(await fileToResizedDataURL(f),'',targetMeal);
 }));
 
-/* ---------- AI analysis ---------- */
-async function analyzePhoto(dataURL, extraHint=''){
+/* ---------- AI ---------- */
+async function analyzePhoto(dataURL,hint='',meal){
+  meal=meal||pending?.meal||targetMeal;
   document.getElementById('analyzeTitle').textContent='Analyzing…';
-  const prev=document.getElementById('preview'); prev.src=dataURL; prev.style.display='block';
+  const prev=document.getElementById('preview');prev.src=dataURL;prev.style.display='block';
   document.getElementById('analyzeBody').innerHTML='<div class="loading"><div class="spinner"></div>Identifying food & estimating macros…</div>';
   openModal('analyzeModal');
-
-  const prompt = `You are a nutrition expert. Analyze this food photo and estimate its nutritional content.
-$${extraHint?`User notes: "$${extraHint}"\n`:''}
-Identify each food item, estimate portion sizes from visual cues (plate size, utensils, etc.), and calculate totals.
+  const prompt=`You are a nutrition expert. Analyze this food photo and estimate its nutritional content.
+$${hint?`User notes: "$${hint}"\n`:''}Identify each food item, estimate portion sizes from visual cues (plate size, utensils, etc.), and calculate totals.
 Respond ONLY with valid JSON, no markdown, in this exact shape:
 {"name":"short meal name","items":[{"food":"item name","portion":"e.g. 150g / 1 cup","kcal":0,"p":0,"c":0,"f":0}],"total":{"kcal":0,"p":0,"c":0,"f":0},"confidence":"high|medium|low","notes":"one sentence on assumptions"}
 p=protein grams, c=carbs grams, f=fat grams. If no food is visible, return {"error":"no food detected"}.`;
-
   try{
-    const r = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':settings.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000,
-        messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:dataURL.split(',')[1]}},
-          {type:'text',text:prompt}]}]})
-    });
-    const j = await r.json();
-    if(j.error) throw new Error(j.error.message||'API error');
-    const txt = j.content.map(b=>b.text||'').join('');
-    const data = JSON.parse(txt.match(/\{[\s\S]*\}/)[0]);
-    if(data.error) throw new Error("Couldn't detect food in this photo. Try again or add a note.");
-    pending = { img:dataURL, data };
-    showResult(dataURL, data);
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:dataURL.split(',')[1]}},{type:'text',text:prompt}]}]})});
+    const j=await r.json();
+    if(j.error)throw new Error(j.error.message||'API error');
+    const txt=j.content.map(b=>b.text||'').join('');
+    const data=JSON.parse(txt.match(/\{[\s\S]*\}/)[0]);
+    if(data.error)throw new Error("Couldn't detect food in this photo. Try again or add a note.");
+    pending={img:dataURL,data,meal};showResult(data);
   }catch(err){
-    pending = pending||{img:dataURL};
+    pending={img:dataURL,meal};
     document.getElementById('analyzeBody').innerHTML=`<div class="err">${esc(err.message)}</div>
       <div class="field"><label>Describe the meal to help the AI</label><input id="hintRetry" placeholder="e.g. grilled chicken with rice, about 200g"></div>
-      <button class="btn primary" onclick="analyzePhoto(pending.img, document.getElementById('hintRetry').value)">Retry</button>
-      <button class="btn ghost" onclick="openManual(pending.img)">Enter manually</button>`;
+      <button class="btn primary" onclick="analyzePhoto(pending.img,document.getElementById('hintRetry').value)">Retry</button>
+      <button class="btn ghost" onclick="openManual(pending.img,'new',pending.meal)">Enter manually</button>`;
   }
 }
-
-function showResult(img, d){
+function showResult(d){
   document.getElementById('analyzeTitle').innerHTML=`Review & Log <span class="conf $${d.confidence}">$${d.confidence} confidence</span>`;
   document.getElementById('analyzeBody').innerHTML=`
+    ${mealSelect(pending.meal)}
     <div class="field"><label>Meal name</label><input id="eName" value="${esc(d.name)}"></div>
     <div class="items">$${(d.items||[]).map(i=>`<div class="item"><span>$${esc(i.food)} <small style="color:var(--muted)">($${esc(i.portion)})</small></span><span>$${Math.round(i.kcal)} kcal</span></div>`).join('')}</div>
-    ${macroInputs(d.total)}
-    ${scaleRow()}
+    $${macroInputs(d.total)}$${scaleRow()}
     <p class="note">🤖 ${esc(d.notes||'')}</p>
     <div class="field"><label>Not right? Add a correction and re-analyze</label><input id="hint" placeholder="e.g. that's brown rice, and a 300g steak"></div>
-    <button class="btn ghost" onclick="analyzePhoto(pending.img, document.getElementById('hint').value)">↻ Re-analyze with note</button>
-    <label class="check"><input type="checkbox" id="saveFav"> Save to favorites for quick re-logging</label>
-    <button class="btn primary" onclick="logPending()">Log meal</button>`;
+    <button class="btn ghost" onclick="analyzePhoto(pending.img,document.getElementById('hint').value)">↻ Re-analyze with note</button>
+    <label class="check"><input type="checkbox" id="saveFav"> Save to favorites</label>
+    <button class="btn primary" onclick="logPending()">Log to ${mealOf(pending.meal).name}</button>`;
+  document.getElementById('eMeal').onchange=e=>{pending.meal=e.target.value;document.querySelector('#analyzeBody .btn.primary').textContent='Log to '+mealOf(pending.meal).name;};
 }
-function macroInputs(t){ return `<div class="grid4">
-  <div class="field"><label>Calories</label><input type="number" id="eKcal" value="${t.kcal===''?'':Math.round(t.kcal)}" inputmode="numeric"></div>
-  <div class="field"><label>Protein g</label><input type="number" id="eP" value="${t.p===''?'':Math.round(t.p)}" inputmode="numeric"></div>
-  <div class="field"><label>Carbs g</label><input type="number" id="eC" value="${t.c===''?'':Math.round(t.c)}" inputmode="numeric"></div>
-  <div class="field"><label>Fat g</label><input type="number" id="eF" value="${t.f===''?'':Math.round(t.f)}" inputmode="numeric"></div>
-</div>`; }
-function scaleRow(){ return `<div class="field"><label>Adjust portion</label><div class="grid4">
-  <button class="btn ghost sm" onclick="scale(0.5)">½×</button><button class="btn ghost sm" onclick="scale(0.75)">¾×</button>
-  <button class="btn ghost sm" onclick="scale(1.5)">1½×</button><button class="btn ghost sm" onclick="scale(2)">2×</button></div></div>`; }
-function scale(m){ ['eKcal','eP','eC','eF'].forEach(id=>{ const el=document.getElementById(id); el.value=Math.round(el.value*m); }); }
 
-function readForm(){
-  const g=id=>document.getElementById(id);
-  let kcal=+g('eKcal').value, p=+g('eP').value||0, c=+g('eC').value||0, f=+g('eF').value||0;
-  if(!g('eKcal').value) kcal=Math.round(p*4+c*4+f*9);
-  return { name:g('eName').value.trim()||'Meal', kcal, p, c, f };
-}
+/* ---------- forms ---------- */
+function mealSelect(sel){return `<div class="field"><label>Which meal?</label><select id="eMeal">$${MEALS.map(m=>`<option value="$${m.id}" $${m.id===sel?'selected':''}>$${m.icon} ${m.name}</option>`).join('')}</select></div>`;}
+function macroInputs(t){const v=x=>x===''||x==null?'':Math.round(x);return `<div class="grid4">
+  <div class="field"><label>Calories</label><input type="number" id="eKcal" value="${v(t.kcal)}" inputmode="numeric"></div>
+  <div class="field"><label>Protein g</label><input type="number" id="eP" value="${v(t.p)}" inputmode="numeric"></div>
+  <div class="field"><label>Carbs g</label><input type="number" id="eC" value="${v(t.c)}" inputmode="numeric"></div>
+  <div class="field"><label>Fat g</label><input type="number" id="eF" value="${v(t.f)}" inputmode="numeric"></div></div>`;}
+function scaleRow(){return `<div class="field"><label>Adjust portion</label><div class="grid4">
+  <button class="btn ghost sm" onclick="scale(.5)">½×</button><button class="btn ghost sm" onclick="scale(.75)">¾×</button>
+  <button class="btn ghost sm" onclick="scale(1.5)">1½×</button><button class="btn ghost sm" onclick="scale(2)">2×</button></div></div>`;}
+function scale(m){['eKcal','eP','eC','eF'].forEach(id=>{const el=document.getElementById(id);el.value=Math.round(el.value*m);});}
+function manualForm(e){return `<div class="field"><label>Food / meal name</label><input id="eName" value="$${esc(e.name)}" placeholder="e.g. Chicken salad"></div>$${macroInputs(e)}${scaleRow()}
+  <p class="note">Tip: leave calories blank and it'll be computed from macros (4 / 4 / 9 kcal per gram).</p>`;}
+function readForm(){const g=id=>document.getElementById(id);
+  let kcal=+g('eKcal').value,p=+g('eP').value||0,c=+g('eC').value||0,f=+g('eF').value||0;
+  if(!g('eKcal').value)kcal=Math.round(p*4+c*4+f*9);
+  return {name:g('eName').value.trim()||'Meal',kcal,p,c,f,meal:g('eMeal')?g('eMeal').value:(pending?.meal||'snack')};}
 async function logPending(){
   const m=readForm();
-  const e = { id:Date.now(), ...m, time:nowTime(), img: pending?.img ? await thumb(pending.img) : null };
-  if(pending?.editId){
-    const arr=log[viewDate]; const i=arr.findIndex(x=>x.id===pending.editId);
-    if(i>-1){ e.id=pending.editId; e.time=arr[i].time; e.img=arr[i].img; arr[i]=e; }
-  } else {
-    (log[viewDate] = log[viewDate]||[]).push(e);
-  }
-  const fav=document.getElementById('saveFav');
-  if(fav&&fav.checked) addFav(m);
-  save(); pending=null; closeModal('analyzeModal'); render(); toast('Meal logged ✓');
+  const e={id:Date.now(),...m,time:nowTime(),img:pending?.img?await thumb(pending.img):null};
+  if(pending?.editId){const arr=log[viewDate];const i=arr.findIndex(x=>x.id===pending.editId);
+    if(i>-1){e.id=pending.editId;e.time=arr[i].time;e.img=arr[i].img;arr[i]=e;}}
+  else (log[viewDate]=log[viewDate]||[]).push(e);
+  const fav=document.getElementById('saveFav');if(fav&&fav.checked)addFav(m);
+  save();pending=null;closeModal('analyzeModal');render();toast(`Logged to ${mealOf(e.meal).name} ✓`);
 }
 
-/* ---------- Manual entry / favorites ---------- */
-function addFav(m){ favs=favs.filter(f=>f.name.toLowerCase()!==m.name.toLowerCase()); favs.unshift({name:m.name,kcal:m.kcal,p:m.p,c:m.c,f:m.f}); favs=favs.slice(0,50); save(); }
-function recentFoods(){
-  const seen=new Set(), out=[];
-  Object.keys(log).sort().reverse().forEach(k=>log[k].slice().reverse().forEach(e=>{
-    const key=e.name.toLowerCase(); if(!seen.has(key)){ seen.add(key); out.push({name:e.name,kcal:e.kcal,p:e.p,c:e.c,f:e.f}); }
-  }));
-  return out.slice(0,20);
-}
-function openManual(img=null, tab='new'){
-  pending = { img };
-  const prev=document.getElementById('preview'); prev.style.display = img?'block':'none'; if(img) prev.src=img;
-  document.getElementById('analyzeTitle').textContent='Add Food';
-  document.getElementById('analyzeBody').innerHTML=`
-    <div class="tabs">
+/* ---------- manual / favorites ---------- */
+function addFav(m){favs=favs.filter(f=>f.name.toLowerCase()!==m.name.toLowerCase());favs.unshift({name:m.name,kcal:m.kcal,p:m.p,c:m.c,f:m.f});favs=favs.slice(0,50);save();}
+function recentFoods(){const seen=new Set(),out=[];Object.keys(log).sort().reverse().forEach(k=>log[k].slice().reverse().forEach(e=>{
+  const key=e.name.toLowerCase();if(!seen.has(key)){seen.add(key);out.push({name:e.name,kcal:e.kcal,p:e.p,c:e.c,f:e.f});}}));return out.slice(0,20);}
+function openManual(img=null,tab='new',meal){
+  pending={img,meal:meal||pending?.meal||guessMeal()};
+  const prev=document.getElementById('preview');prev.style.display=img?'block':'none';if(img)prev.src=img;
+  document.getElementById('analyzeTitle').textContent=`Add to ${mealOf(pending.meal).name}`;
+  document.getElementById('analyzeBody').innerHTML=`<div class="tabs">
       <button class="${tab==='new'?'on':''}" onclick="openManual(pending.img,'new')">✏️ New</button>
       <button class="${tab==='fav'?'on':''}" onclick="openManual(pending.img,'fav')">⭐ Favorites</button>
-      <button class="${tab==='recent'?'on':''}" onclick="openManual(pending.img,'recent')">🕒 Recent</button>
-    </div>
-    <div id="manualTab"></div>`;
+      <button class="${tab==='recent'?'on':''}" onclick="openManual(pending.img,'recent')">🕒 Recent</button></div>
+    ${mealSelect(pending.meal)}<div id="manualTab"></div>`;
+  document.getElementById('eMeal').onchange=e=>{pending.meal=e.target.value;document.getElementById('analyzeTitle').textContent=`Add to ${mealOf(pending.meal).name}`;};
   const body=document.getElementById('manualTab');
-  if(tab==='new'){
-    body.innerHTML = manualForm({name:'',kcal:'',p:'',c:'',f:''}) +
-      `<label class="check"><input type="checkbox" id="saveFav"> Save to favorites</label>
-       <button class="btn primary" onclick="logPending()">Log food</button>`;
-  } else {
-    const list = tab==='fav'?favs:recentFoods();
-    body.innerHTML = `<input class="search" id="favSearch" placeholder="Search…" oninput="filterFavs(this.value,'${tab}')"><div id="favList"></div>`;
-    renderFavList(list, tab);
-  }
+  if(tab==='new'){body.innerHTML=manualForm({name:'',kcal:'',p:'',c:'',f:''})+`<label class="check"><input type="checkbox" id="saveFav"> Save to favorites</label><button class="btn primary" onclick="logPending()">Log food</button>`;}
+  else{body.innerHTML=`<input class="search" id="favSearch" placeholder="Search…" oninput="filterFavs(this.value,'${tab}')"><div id="favList"></div>`;renderFavList(tab==='fav'?favs:recentFoods(),tab);}
   openModal('analyzeModal');
 }
-function filterFavs(q, tab){ const src=tab==='fav'?favs:recentFoods(); renderFavList(src.filter(f=>f.name.toLowerCase().includes(q.toLowerCase())), tab); }
-function renderFavList(list, tab){
-  const el=document.getElementById('favList');
-  if(!list.length){ el.innerHTML=`<div class="empty">${tab==='fav'?'No favorites yet. Tick "Save to favorites" when logging a meal.':'No recent foods yet.'}</div>`; return; }
-  el.innerHTML = list.map((f,i)=>`<div class="fav">
-      <div class="n" onclick='prefill($${JSON.stringify(f).replace(/'/g,"&#39;")})'><b>$${esc(f.name)}</b><small>$${Math.round(f.kcal)} kcal · P $${Math.round(f.p)} · C $${Math.round(f.c)} · F $${Math.round(f.f)}</small></div>
-      $${tab==='fav'?`<button class="x" onclick="removeFav($${i})">✕</button>`:''}
-      <button class="add" onclick='quickLog(${JSON.stringify(f).replace(/'/g,"&#39;")})'>+</button>
-    </div>`).join('');
-}
-function removeFav(i){ favs.splice(i,1); save(); openManual(pending?.img,'fav'); }
-function quickLog(f){ (log[viewDate]=log[viewDate]||[]).push({id:Date.now(),...f,time:nowTime(),img:null}); save(); render(); toast(`Logged ${f.name} ✓`); }
-function prefill(f){
-  openManual(pending?.img,'new');
-  document.getElementById('eName').value=f.name;
-  document.getElementById('eKcal').value=Math.round(f.kcal); document.getElementById('eP').value=Math.round(f.p);
-  document.getElementById('eC').value=Math.round(f.c); document.getElementById('eF').value=Math.round(f.f);
-}
+function filterFavs(q,tab){const src=tab==='fav'?favs:recentFoods();renderFavList(src.filter(f=>f.name.toLowerCase().includes(q.toLowerCase())),tab);}
+function renderFavList(list,tab){const el=document.getElementById('favList');
+  if(!list.length){el.innerHTML=`<div class="empty">${tab==='fav'?'No favorites yet. Tick "Save to favorites" when logging.':'No recent foods yet.'}</div>`;return;}
+  el.innerHTML=list.map((f,i)=>{const js=JSON.stringify(f).replace(/'/g,'&#39;');return `<div class="fav">
+    <div class="n" onclick='prefill($${js})'><b>$${esc(f.name)}</b><small>$${Math.round(f.kcal)} kcal · P $${Math.round(f.p)} · C $${Math.round(f.c)} · F $${Math.round(f.f)}</small></div>
+    $${tab==='fav'?`<button class="x" onclick="removeFav($${i})">✕</button>`:''}<button class="add" onclick='quickLog(${js})'>+</button></div>`;}).join('');}
+function removeFav(i){favs.splice(i,1);save();openManual(pending?.img,'fav');}
+function quickLog(f){const function quickLog(f){const meal=pending?.meal||guessMeal();(log[viewDate]=log[viewDate]||[]).push({id:Date.now(),...f,meal,time:nowTime(),img:null});save();render();toast(`Logged ${f.name} ✓`);}
+function prefill(f){openManual(pending?.img,'new',pending?.meal);document.getElementById('eName').value=f.name;
+  document.getElementById('eKcal').value=Math.round(f.kcal);document.getElementById('eP').value=Math.round(f.p);
+  document.getElementById('eC').value=Math.round(f.c);document.getElementById('eF').value=Math.round(f.f);}
 function editEntry(e){
-  pending = { editId:e.id };
-  const prev=document.getElementById('preview'); prev.style.display = e.img?'block':'none'; if(e.img) prev.src=e.img;
+  pending={editId:e.id,meal:e.meal};
+  const prev=document.getElementById('preview');prev.style.display=e.img?'block':'none';if(e.img)prev.src=e.img;
   document.getElementById('analyzeTitle').textContent='Edit Meal';
-  document.getElementById('analyzeBody').innerHTML=manualForm(e)+`<label class="check"><input type="checkbox" id="saveFav"> Save to favorites</label><button class="btn primary" onclick="logPending()">Save changes</button>`;
+  document.getElementById('analyzeBody').innerHTML=mealSelect(e.meal)+manualForm(e)+`<label class="check"><input type="checkbox" id="saveFav"> Save to favorites</label><button class="btn primary" onclick="logPending()">Save changes</button>`;
   openModal('analyzeModal');
 }
-function
+
+/* ---------- settings ---------- */
+function unitChanged(){const u=document.getElementById('gUnit').value;const g=document.getElementById('gWater'),gl=document.getElementById('gGlass');
+  const cur=g.dataset.unit||settings.waterUnit;
+  if(cur!==u){const f=u==='oz'?1/OZ:OZ;g.value=Math.round(g.value*f*10)/10;gl.value=Math.round(gl.value*f*10)/10;}
+  g.dataset.unit=u;
+  document.getElementById('gWaterLbl').textContent=`Goal (${u})`;document.getElementById('gGlassLbl').textContent=`Glass (${u})`;}
+function openSettings(){const g=id=>document.getElementById(id);
+  g('apiKey').value=settings.apiKey;g('gKcal').value=settings.kcal;g('gP').value=settings.p;g('gC').value=settings.c;g('gF').value=settings.f;
+  g('gUnit').value=settings.waterUnit;g('gWater').dataset.unit=settings.waterUnit;
+  g('gWater').value=fmtNum(toU(settings.water));g('gGlass').value=fmtNum(toU(settings.glass));
+  g('gWaterLbl').textContent=`Goal (${settings.waterUnit})`;g('gGlassLbl').textContent=`Glass (${settings.waterUnit})`;
+  openModal('settingsModal');}
+function saveSettings(){const g=id=>document.getElementById(id);
+  settings.apiKey=g('apiKey').value.trim();
+  settings.kcal=+g('gKcal').value||2000;settings.p=+g('gP').value||150;settings.c=+g('gC').value||200;settings.f=+g('gF').value||65;
+  settings.waterUnit=g('gUnit').value;const f=settings.waterUnit==='oz'?OZ:1;
+  settings.water=Math.round((+g('gWater').value||(settings.waterUnit==='oz'?64:2000))*f);
+  settings.glass=Math.round((+g('gGlass').value||(settings.waterUnit==='oz'?8:250))*f);
+  save();closeModal('settingsModal');render();toast('Settings saved');}
+function exportData(){const a=document.createElement('a');
+  a.href='data:application/json,'+encodeURIComponent(JSON.stringify({settings:{...settings,apiKey:undefined},log,water,favorites:favs},null,2));
+  a.download='macrosnap-export.json';a.click();}
+function clearAll(){if(confirm('Delete ALL logged meals, water and favorites?')){log={};water={};favs=[];save();render();closeModal('settingsModal');}}
+
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+render();
+if(!settings.apiKey)setTimeout(()=>{toast('Add your Anthropic API key to enable AI');openSettings();},600);
+</script>
+</body>
+</html>
